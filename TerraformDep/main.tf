@@ -316,7 +316,7 @@ resource "kubernetes_service" "app_service" {
         type                    = "LoadBalancer"
         load_balancer_class     = "service.k8s.aws/nlb"
     }
-    wait_for_load_balancer = false
+    wait_for_load_balancer = true
     depends_on = [
         kubernetes_deployment.app,
         time_sleep.wait_for_lb_controller
