@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'AWS_ACCOUNT_ID', defaultValue: '202951752028', description: 'AWS Account ID')
-        string(name: 'AWS_REGION', defaultValue: 'eu-west-2', description: 'AWS Region')
+        string(name: 'AWS_ACCOUNT_ID', defaultValue: '545586474482', description: 'AWS Account ID')
+        string(name: 'AWS_REGION', defaultValue: 'eu-north-1', description: 'AWS Region')
         string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag (leave blank to use build number and commit hash)')
         string(name: 'CLUSTER_NAME', defaultValue: 'ecom-cluster', description: 'EKS Cluster Name')
         string(name: 'TEST_PORT', defaultValue: '8081', description: 'Host port for testing Docker image (use 0 for random port)')
@@ -53,7 +53,7 @@ pipeline {
                     def awsAccountId = params.AWS_ACCOUNT_ID
                     def clusterName = params.CLUSTER_NAME
                     try {
-                        withAWS(credentials: 'access-key', region: "${params.AWS_REGION}") {
+                        withAWS(credentials: 'aws_id', region: "${params.AWS_REGION}") {
                             try {
                                 awsAccountId = sh(script: "aws ssm get-parameter --name /jenkins/AWS_ACCOUNT_ID --with-decryption --query Parameter.Value --output text", returnStdout: true).trim()
                                 echo "Fetched AWS Account ID: ${awsAccountId}"
@@ -84,8 +84,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        withAWS(credentials: 'access-key', region: "${params.AWS_REGION}") {
-                            sh "aws ecr describe-repositories --repository-names projectme-ak --region ${params.AWS_REGION} || aws ecr create-repository --repository-name projectme-ak --region ${params.AWS_REGION}"
+                        withAWS(credentials: 'aws_id', region: "${params.AWS_REGION}") {
+                            sh "aws ecr describe-repositories --repository-names projectme-cv --region ${params.AWS_REGION} || aws ecr create-repository --repository-name projectme-ak --region ${params.AWS_REGION}"
                         }
                     } catch (Exception e) {
                         echo "Failed to ensure ECR repository: ${e.message}. Assuming repository exists."
@@ -148,7 +148,7 @@ pipeline {
             }
             steps {
                 script {
-                    withAWS(credentials: 'access-key', region: "${params.AWS_REGION}") {
+                    withAWS(credentials: 'aws_id', region: "${params.AWS_REGION}") {
                         sh "aws ecr get-login-password --region ${params.AWS_REGION} | docker login --username AWS --password-stdin ${env.DOCKER_IMAGE.split(':')[0]}"
                     }
                 }
@@ -192,7 +192,7 @@ aws_account_id = "${env.AWS_ACCOUNT_ID}"
             steps {
                 dir('TerraformDep') {
                     script {
-                        withAWS(credentials: 'access-key', region: "${params.AWS_REGION}") {
+                        withAWS(credentials: 'aws_id', region: "${params.AWS_REGION}") {
                             sh 'terraform init'
                             sh 'terraform workspace select dev || terraform workspace new dev'
                             sh 'terraform plan -out=tfplan'
@@ -210,9 +210,9 @@ aws_account_id = "${env.AWS_ACCOUNT_ID}"
             steps {
                 dir('TerraformDep') {
                     script {
-                        withAWS(credentials: 'access-key', region: "${params.AWS_REGION}") {
+                        withAWS(credentials: 'aws_id', region: "${params.AWS_REGION}") {
                             writeFile file: 'terraform.tfvars', text: """
-ecr_image_uri  = "205930632952.dkr.ecr.us-west-2.amazonaws.com/projectme-ak:latest"
+ecr_image_uri  = "545586474482.dkr.ecr.eu-north-1.amazonaws.com/projectme-cv:latest"
 cluster_name   = "${params.CLUSTER_NAME}"
 region         = "${params.AWS_REGION}"
 service_type   = "LoadBalancer"
